@@ -13,11 +13,11 @@ import java.nio.ByteBuffer;
  */
 public class ByteBufUtils {
 
-    public static ByteBuf pack(String message) {
+    public static ByteBuf pack(byte[] data) {
         ByteBuf buffer = Unpooled.buffer();
-        byte[] len = ByteBuffer.allocate(8).putLong(message.length()).array();
+        byte[] len = ByteBuffer.allocate(8).putLong(data.length).array();
         ArrayUtils.reverse(len);
-        buffer.writeBytes(len).writeBytes(message.getBytes());
+        buffer.writeBytes(len).writeBytes(data);
         return buffer;
     }
 

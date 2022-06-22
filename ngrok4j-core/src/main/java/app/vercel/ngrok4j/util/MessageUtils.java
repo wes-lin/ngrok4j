@@ -1,7 +1,7 @@
 package app.vercel.ngrok4j.util;
 
-import app.vercel.ngrok4j.model.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import app.vercel.ngrok4j.model.Message;
+import app.vercel.ngrok4j.model.MsgType;
 import com.fasterxml.jackson.databind.*;
 
 /**
@@ -14,42 +14,28 @@ public class MessageUtils {
     private static final ObjectMapper mapper = new ObjectMapper()
             .setPropertyNamingStrategy(new PropertyNamingStrategies.UpperCamelCaseStrategy())
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS,false);
+            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 
-    public static String toJson(Object object) throws JsonProcessingException {
-        return mapper.writeValueAsString(object);
-    }
-
-    public static String regProxy(String clientId) throws JsonProcessingException{
-        RegProxy regProxy = new RegProxy();
-        regProxy.setClientId(clientId);
-        return toJson(new Message<>(MsgType.RegProxy,regProxy));
-    }
-
-    public static Response getResponse(String msg) throws JsonProcessingException {
-        JsonNode node = mapper.readTree(msg);
+    public static Object getPayload(byte[] data) throws Exception {
+        JsonNode node = mapper.readTree(data);
         MsgType msgType = MsgType.valueOf(node.get("Type").asText());
         JsonNode payloadNode = node.get("Payload");
-        Response response = new Response();
-        response.setType(msgType);
-        switch (msgType) {
-            case AuthResp:
-                AuthResponse payload = getPayload(payloadNode, AuthResponse.class);
-                response.setPayload(payload);
-                break;
-            case ReqProxy:
-            case Pong:
-                response.setPayload(mapper.createObjectNode());
-                break;
-            case NewTunnel:
-                NewTunnel newTunnel = getPayload(payloadNode, NewTunnel.class);
-                response.setPayload(newTunnel);
-                break;
+        Class clazz = MsgType.getMsgClass(msgType);
+        if (clazz == null) {
+            throw new IllegalArgumentException("Unknown MsgType:" + msgType);
         }
-        return response;
+        return mapper.convertValue(payloadNode, clazz);
     }
 
-    public static <T> T getPayload(JsonNode payloadNode, Class<T> clazz) throws JsonProcessingException {
-        return mapper.readValue(payloadNode.toString(), clazz);
+    public static byte[] getPayloadByte(Object payload) throws Exception {
+        if (payload == null) {
+            return null;
+        }
+        MsgType msgType = MsgType.getMsgType(payload.getClass());
+        if (msgType == null) {
+            throw new IllegalArgumentException("Unknown PayloadType:" + payload.getClass());
+        }
+        Message message = new Message(msgType, payload);
+        return mapper.writeValueAsBytes(message);
     }
 }

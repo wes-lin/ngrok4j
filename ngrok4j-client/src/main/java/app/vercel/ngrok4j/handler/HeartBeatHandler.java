@@ -17,12 +17,12 @@ public class HeartBeatHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        if (evt instanceof IdleStateEvent){
+        if (evt instanceof IdleStateEvent) {
             IdleStateEvent event = (IdleStateEvent) evt;
             if (IdleState.WRITER_IDLE.equals(event.state())) {
                 ctx.writeAndFlush(new Ping());
             }
-        }else {
+        } else {
             super.userEventTriggered(ctx, evt);
         }
     }

@@ -1,5 +1,6 @@
 package app.vercel.ngrok4j.config;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 /**
@@ -8,10 +9,11 @@ import lombok.Data;
  * @Description:
  */
 @Data
+@AllArgsConstructor
 public class NgrokConfig {
 
     private String serverAddr;
     private int serverPort;
-    private NgrokTunnel tunnels;
+    private NgrokTunnel[] tunnels;
 
 }

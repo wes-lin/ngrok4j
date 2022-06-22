@@ -1,6 +1,7 @@
 package app.vercel.ngrok4j.handler;
 
-import app.vercel.ngrok4j.ProxyHandlerManager;
+import app.vercel.ngrok4j.config.NgrokConfig;
+import app.vercel.ngrok4j.config.NgrokTunnel;
 import app.vercel.ngrok4j.model.*;
 import app.vercel.ngrok4j.util.ByteBufUtils;
 import app.vercel.ngrok4j.util.LogUtils;
@@ -18,7 +19,9 @@ import org.apache.commons.lang.StringUtils;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @Auther: WesLin
@@ -29,10 +32,15 @@ import java.util.UUID;
 public class ControlHandler extends ChannelInboundHandlerAdapter {
 
     private String clientId;
-    private ChannelFuture remoteChannel;
     private NioEventLoopGroup group = new NioEventLoopGroup();
 
-//    private ProxyHandlerManager proxyHandlerManager;
+    public final Map<String, NgrokTunnel> map = new ConcurrentHashMap<>();
+
+    private NgrokConfig config;
+
+    public ControlHandler(NgrokConfig config) {
+        this.config = config;
+    }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -52,17 +60,17 @@ public class ControlHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof AuthResponse) {
             AuthResponse response = (AuthResponse) msg;
             clientId = response.getClientId();
-            ReqTunnel reqTunnel = new ReqTunnel();
-            String subdomain = "iyuuyuasdadsadiy";
-            String reqId = UUID.randomUUID().toString()
-                    .toLowerCase().replace("-", "")
-                    .substring(0, 8);
-            reqTunnel.setReqId(reqId);
-            reqTunnel.setSubdomain(subdomain);
-            reqTunnel.setProtocol("http");
-            ctx.channel().writeAndFlush(reqTunnel);
-//            proxyHandlerManager = new ProxyHandlerManager(clientId);
-//            ctx.channel().writeAndFlush(proxyHandlerManager.buildReqTunnel());
+            for (NgrokTunnel tunnel : config.getTunnels()) {
+                ReqTunnel reqTunnel = new ReqTunnel();
+                String reqId = UUID.randomUUID().toString()
+                        .toLowerCase().replace("-", "")
+                        .substring(0, 8);
+                reqTunnel.setReqId(reqId);
+                reqTunnel.setSubdomain(tunnel.getSubdomain());
+                reqTunnel.setProtocol(tunnel.getProtocol().name());
+                ctx.channel().writeAndFlush(reqTunnel);
+                map.put(reqId, tunnel);
+            }
         } else if (msg instanceof ReqProxy) {
             Bootstrap b = new Bootstrap();
             b.group(group)
@@ -76,11 +84,16 @@ public class ControlHandler extends ChannelInboundHandlerAdapter {
                                     .newEngine(ch.alloc());
                             ChannelPipeline p = ch.pipeline();
                             p.addFirst(new SslHandler(engine, false));
-                            p.addLast(new ProxyHandler(clientId));
+                            p.addLast(new ProxyHandler(config));
                         }
                     });
-            remoteChannel = b.connect("vaiwan.com", 443).sync();
-            log.info("connect to proxy address {},{}", remoteChannel.channel().remoteAddress(),remoteChannel);
+            ChannelFuture remoteChannel = b.connect(ctx.channel().remoteAddress()).sync();
+            log.info("connect to proxy address {},{}", remoteChannel.channel().remoteAddress(), remoteChannel);
+            RegProxy regProxy = new RegProxy();
+            regProxy.setClientId(clientId);
+            byte[] data = MessageUtils.getPayloadByte(regProxy);
+            LogUtils.logOut(this.getClass(), new String(data));
+            remoteChannel.channel().writeAndFlush(ByteBufUtils.pack(data));
             remoteChannel.channel().closeFuture()
                     .addListener((ChannelFutureListener) channelFuture -> {
                         log.info("disconnect to proxy address " + remoteChannel.channel().remoteAddress());
@@ -90,7 +103,8 @@ public class ControlHandler extends ChannelInboundHandlerAdapter {
             if (StringUtils.isNotEmpty(newTunnel.getError())) {
                 log.error("Tunnel register fail error:{}", newTunnel.getError());
             } else {
-//                remoteChannel.channel().pipeline().addLast(new ProxyHandler(clientId));
+                NgrokTunnel ngrokTunnel = map.get(newTunnel.getReqId());
+                ngrokTunnel.setUrl(newTunnel.getUrl());
                 log.info("Tunnel register success");
             }
         }

@@ -12,6 +12,7 @@ import java.io.Serializable;
 @Data
 public class NewTunnel implements Serializable{
 
+    private static final long serialVersionUID = 4186082761956945594L;
     private String reqId;
     private String protocol;
     private String url;
