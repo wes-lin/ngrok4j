@@ -53,15 +53,17 @@ public class ProxyHandler extends ChannelInboundHandlerAdapter {
 //        RegProxy regProxy = new RegProxy();
 //        regProxy.setClientId(clientId);
 //        ctx.writeAndFlush(regProxy);
+        log.info("{}:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",this);
+        super.channelActive(ctx);
     }
 
-//    @Override
-//    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-//        log.error("error-----:{}", cause.getMessage());
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        log.error("error-----:{}", cause.getMessage());
 //        String error = buildErrorMsg();
 //        ctx.channel().writeAndFlush(Unpooled.copiedBuffer(error, CharsetUtil.UTF_8));
 //        ctx.channel().close();
-//    }
+    }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -121,7 +123,7 @@ public class ProxyHandler extends ChannelInboundHandlerAdapter {
                         log.error("{} :{}",this,e);
                         String error = buildErrorMsg();
                         ctx.channel().writeAndFlush(Unpooled.copiedBuffer(error, CharsetUtil.UTF_8));
-                        ctx.channel().close();
+                        ctx.close().sync();
                     }
                 }
             }

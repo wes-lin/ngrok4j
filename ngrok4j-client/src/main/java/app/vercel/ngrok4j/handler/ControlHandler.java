@@ -1,5 +1,6 @@
 package app.vercel.ngrok4j.handler;
 
+import app.vercel.ngrok4j.ProxyHandlerManager;
 import app.vercel.ngrok4j.model.*;
 import app.vercel.ngrok4j.util.ByteBufUtils;
 import app.vercel.ngrok4j.util.LogUtils;
@@ -31,6 +32,8 @@ public class ControlHandler extends ChannelInboundHandlerAdapter {
     private ChannelFuture remoteChannel;
     private NioEventLoopGroup group = new NioEventLoopGroup();
 
+//    private ProxyHandlerManager proxyHandlerManager;
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         Auth auth = new Auth();
@@ -58,6 +61,8 @@ public class ControlHandler extends ChannelInboundHandlerAdapter {
             reqTunnel.setSubdomain(subdomain);
             reqTunnel.setProtocol("http");
             ctx.channel().writeAndFlush(reqTunnel);
+//            proxyHandlerManager = new ProxyHandlerManager(clientId);
+//            ctx.channel().writeAndFlush(proxyHandlerManager.buildReqTunnel());
         } else if (msg instanceof ReqProxy) {
             Bootstrap b = new Bootstrap();
             b.group(group)
@@ -75,16 +80,17 @@ public class ControlHandler extends ChannelInboundHandlerAdapter {
                         }
                     });
             remoteChannel = b.connect("vaiwan.com", 443).sync();
-            log.info("connect to proxy address {}", remoteChannel.channel().remoteAddress());
+            log.info("connect to proxy address {},{}", remoteChannel.channel().remoteAddress(),remoteChannel);
             remoteChannel.channel().closeFuture()
-                    .addListener((ChannelFutureListener) channelFuture ->
-                            log.info("disconnect to proxy address " + remoteChannel.channel().remoteAddress())
-                    );
+                    .addListener((ChannelFutureListener) channelFuture -> {
+                        log.info("disconnect to proxy address " + remoteChannel.channel().remoteAddress());
+                    });
         } else if (msg instanceof NewTunnel) {
             NewTunnel newTunnel = (NewTunnel) msg;
             if (StringUtils.isNotEmpty(newTunnel.getError())) {
                 log.error("Tunnel register fail error:{}", newTunnel.getError());
             } else {
+//                remoteChannel.channel().pipeline().addLast(new ProxyHandler(clientId));
                 log.info("Tunnel register success");
             }
         }
