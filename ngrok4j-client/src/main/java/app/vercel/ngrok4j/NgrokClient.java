@@ -3,8 +3,6 @@ package app.vercel.ngrok4j;
 import app.vercel.ngrok4j.codec.JsonDecoder;
 import app.vercel.ngrok4j.codec.JsonEncoder;
 import app.vercel.ngrok4j.config.NgrokConfig;
-import app.vercel.ngrok4j.config.NgrokTunnel;
-import app.vercel.ngrok4j.config.Protocol;
 import app.vercel.ngrok4j.handler.ControlHandler;
 import app.vercel.ngrok4j.handler.HeartBeatHandler;
 import io.netty.bootstrap.Bootstrap;
@@ -14,12 +12,13 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.timeout.IdleStateHandler;
-import lombok.AllArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.net.ssl.SSLEngine;
 import java.nio.ByteOrder;
@@ -30,14 +29,18 @@ import java.util.concurrent.TimeUnit;
  * @Date: 2022/6/8
  * @Description:
  */
-@Log4j2
-@AllArgsConstructor
+@Slf4j
 public class NgrokClient {
 
     private NgrokConfig config;
+    private ChannelFuture channelFuture;
+    private NioEventLoopGroup eventExecutors = new NioEventLoopGroup();
+
+    public NgrokClient(NgrokConfig config) {
+        this.config = config;
+    }
 
     public void start() {
-        NioEventLoopGroup eventExecutors = new NioEventLoopGroup();
         try {
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.group(eventExecutors)
@@ -52,6 +55,7 @@ public class NgrokClient {
                                     .newEngine(ch.alloc());
                             ChannelPipeline p = ch.pipeline();
                             p.addFirst(new SslHandler(engine, false));
+                            p.addLast(new LoggingHandler(LogLevel.INFO));
                             //length+ content encoder
                             p.addLast(new LengthFieldPrepender(ByteOrder.LITTLE_ENDIAN, 8, 0, false));
                             //encoder
@@ -66,27 +70,22 @@ public class NgrokClient {
                             p.addLast(new ControlHandler(config));
                         }
                     });
-            //连接服务端
-            ChannelFuture channelFuture = bootstrap.connect(config.getServerAddr(), config.getServerPort()).sync();
-            //对通道关闭进行监听
+            channelFuture = bootstrap.connect(config.getServerAddr(), config.getServerPort()).sync();
             channelFuture.channel().closeFuture().addListener((ChannelFutureListener) t ->
                     log.info("disconnect to remote address " + channelFuture.channel().remoteAddress())
             ).sync();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            eventExecutors.shutdownGracefully();
+            close();
         }
     }
 
-    public static void main(String[] args) {
-        NgrokTunnel[] tunnels = new NgrokTunnel[]{
-                NgrokTunnel.builder().subdomain("iyuuyuasdadsadiy").lhost("127.0.0.1").lport(80).protocol(Protocol.http).build(),
-                NgrokTunnel.builder().subdomain("xxxxxxasdasd").lhost("127.0.0.1").lport(3306).protocol(Protocol.tcp).build()
-        };
-        NgrokConfig config = new NgrokConfig("vaiwan.com", 443, tunnels);
-        NgrokClient client = new NgrokClient(config);
-        client.start();
+    public void close() {
+        if (channelFuture != null) {
+            channelFuture.channel().close();
+        }
+        eventExecutors.shutdownGracefully();
     }
 
 }

@@ -10,15 +10,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>vercel.app</groupId>
-    <artifactId>ngrok4j-client</artifactId>
-
-    <name>ngrok4j-client</name>
+    <artifactId>example</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>vercel.app</groupId>
-            <artifactId>ngrok4j-core</artifactId>
-            <version>${project.version}</version>
+            <artifactId>ngrok4j-client</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

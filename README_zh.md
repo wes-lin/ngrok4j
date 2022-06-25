@@ -1,10 +1,10 @@
 # ngrok4j
 ===================================
-[中文](./README_zh.md)
+[English](./README_zh.md)
 
-### How use ngrok4j
+### 如何使用ngrok4j
 
-* add dependency:
+* 添加依赖:
 ```xml
     <dependency>
         <groupId>vercel.app</groupId>
@@ -12,7 +12,7 @@
         <version>1.0.0</version>
     </dependency>
 ```
-* In general Java project
+* 在普通Java项目中
 ```java
 public class ClientTest {
     public static void main(String[] args) throws Exception{
@@ -26,23 +26,23 @@ public class ClientTest {
     }
 }
 ```
-* NgrokConfig
+* Ngrok配置
 ```java
 public class NgrokConfig {
 
-    private String serverAddr;//remote server address
-    private int serverPort;//remote server port
-    private NgrokTunnel[] tunnels;//tunnel config
+    private String serverAddr;//远程服务地址
+    private int serverPort;//远程服务端口
+    private NgrokTunnel[] tunnels;//tunnel配置参数
 
 }
 
 public class NgrokTunnel {
 
-    private Protocol protocol;//only support http or tcp
-    private String subdomain;//subdomain，just for protocol is http
-    private String lhost;//local ip address
-    private int lport;//local ip address port
-    private int remotePort;//remote server port，just for protocol is tcp
-    private String url;//actual access address
+    private Protocol protocol;//协议支持http 和tcp
+    private String subdomain;//子域名，仅用于http
+    private String lhost;//本地ip
+    private int lport;//本地端口
+    private int remotePort;//远程端口，仅用于tcp
+    private String url;//实际访问的地址,无需配置
 }
 ```

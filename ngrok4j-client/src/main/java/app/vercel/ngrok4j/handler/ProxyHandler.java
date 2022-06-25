@@ -13,17 +13,15 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.CharsetUtil;
-import lombok.extern.log4j.Log4j2;
-
-import java.nio.charset.Charset;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @Auther: WesLin
  * @Date: 2022/6/9
  * @Description:
  */
-@Log4j2
-public class ProxyHandler extends ChannelInboundHandlerAdapter {
+@Slf4j
+public class ProxyHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     private ChannelFuture localChannel;
     private NioEventLoopGroup group = new NioEventLoopGroup();
@@ -36,51 +34,75 @@ public class ProxyHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        ByteBuf byteBuf = (ByteBuf) msg;
-        int rb = byteBuf.readableBytes();
+    protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
+        if (!msg.isReadable()){
+            return;
+        }
+        int rb = msg.readableBytes();
         if (rb > 8) {
-            CharSequence charSequence = byteBuf.readCharSequence(rb, Charset.defaultCharset());
-            String bufferStr = charSequence.toString();
-            LogUtils.logIn(this.getClass(), bufferStr);
-            try {
-                Object response = MessageUtils.getPayload(bufferStr.getBytes());
+            byte[] data = new byte[rb];
+            msg.readBytes(data);
+            LogUtils.logIn(this.getClass(), new String(data));
+            if (localChannel == null) {
+                Object response;
+                try {
+                    response = MessageUtils.getPayload(data);
+                }catch (Exception e){
+                    log.error("getPayLoad fail,close proxy...");
+                    ctx.close();
+                    return;
+                }
                 if (response instanceof StartProxy) {
                     log.info("=====StartProxy=====");
                     StartProxy startProxy = (StartProxy) response;
-                    for (NgrokTunnel ngrokTunnel : config.getTunnels()) {
-                        if (startProxy.getUrl().equals(ngrokTunnel.getUrl())){
-                            Bootstrap b = new Bootstrap();
-                            b.group(group)
-                                    .channel(NioSocketChannel.class)
-                                    .option(ChannelOption.TCP_NODELAY, true)
-                                    .option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(BUFFER_SIZE))
-                                    .handler(new ChannelInitializer<SocketChannel>() {
-                                        protected void initChannel(SocketChannel ch) {
-                                            ChannelPipeline p = ch.pipeline();
-                                            p.addLast(new FetchDataHandler(ctx.channel()));
-                                        }
-                                    });
-                            localChannel = b.connect(ngrokTunnel.getLhost(), ngrokTunnel.getLport()).sync();
-                            log.info("connect local port：" + localChannel.channel().localAddress());
-                            localChannel.channel().closeFuture().addListener((ChannelFutureListener) t -> {
-                                log.info("disconnect local port：" + localChannel.channel().localAddress());
-                            });
-                        }
+                    NgrokTunnel localTunnel = getLocalTunnel(startProxy.getUrl());
+                    if (localTunnel == null) {
+                        log.error("cannot find localTunnel:{}", startProxy.getUrl());
+                        return;
+                    }
+                    try {
+                        Bootstrap b = new Bootstrap();
+                        b.group(group)
+                                .channel(NioSocketChannel.class)
+                                .option(ChannelOption.TCP_NODELAY, false)
+                                .option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(BUFFER_SIZE))
+                                .handler(new ChannelInitializer<SocketChannel>() {
+                                    protected void initChannel(SocketChannel ch) {
+                                        ChannelPipeline p = ch.pipeline();
+                                        p.addLast(new FetchDataHandler(ctx.channel()));
+                                    }
+                                });
+                        localChannel = b.connect(localTunnel.getLhost(), localTunnel.getLport()).sync();
+                        log.info("connect local port：" + localChannel.channel().localAddress());
+                        localChannel.channel().closeFuture().addListener((ChannelFutureListener) t -> {
+                            log.info("disconnect local port：" + localChannel.channel().localAddress());
+                            ctx.close();
+                        });
+                    } catch (Exception e) {
+                        log.error(e.getMessage());
+                        String error = buildErrorMsg(localTunnel);
+                        ctx.channel().writeAndFlush(Unpooled.copiedBuffer(error, CharsetUtil.UTF_8));
                     }
                 }
-            } catch (Exception e) {
-                log.error("{} :{}",this,e);
-                String error = buildErrorMsg();
-                ctx.channel().writeAndFlush(Unpooled.copiedBuffer(error, CharsetUtil.UTF_8));
-                ctx.close().sync();
+            }else {
+                log.info("ProxyHandler write message to local port " + localChannel.channel().localAddress());
+                localChannel.channel().writeAndFlush(Unpooled.wrappedBuffer(data));
             }
         }
     }
 
-    private String buildErrorMsg(){
+    private NgrokTunnel getLocalTunnel(String url) {
+        for (NgrokTunnel ngrokTunnel : config.getTunnels()) {
+            if (url.equals(ngrokTunnel.getUrl())) {
+                return ngrokTunnel;
+            }
+        }
+        return null;
+    }
+
+    private String buildErrorMsg(NgrokTunnel localTunnel) {
         String html = String.format("<html><body style=\"background-color: #97a8b9\"><div style=\"margin:auto; width:400px;padding: 20px 60px; background-color: #D3D3D3; border: 5px solid maroon;\"><h2>Tunnel %s unavailable</h2><p>Unable to initiate connection to <strong>%s</strong>. This port is not yet available for web server.</p>",
-                "http://iyuuyuasdadsadiy.vaiwan.cn","127.0.0.1:80");
+                localTunnel.getUrl(), localTunnel.getLhost() + ":" + localTunnel.getLport());
         StringBuilder sb = new StringBuilder();
         sb.append("HTTP/1.0 502 Bad Gateway\r\n");
         sb.append("Content-Type: text/html\r\n");

@@ -13,9 +13,9 @@ import lombok.Data;
 public class NgrokTunnel {
 
     private Protocol protocol;
-    private String hostname;
     private String subdomain;
     private String lhost;
     private int lport;
+    private int remotePort;
     private String url;
 }

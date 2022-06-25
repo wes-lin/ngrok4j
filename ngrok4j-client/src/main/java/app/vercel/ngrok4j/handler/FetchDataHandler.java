@@ -1,17 +1,18 @@
 package app.vercel.ngrok4j.handler;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @Auther: WesLin
  * @Date: 2022/6/9
  * @Description:
  */
-@Log4j2
+@Slf4j
 public class FetchDataHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     private Channel channel;
@@ -21,10 +22,18 @@ public class FetchDataHandler extends SimpleChannelInboundHandler<ByteBuf> {
     }
 
     @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        if (this.channel.isActive()){
+            this.channel.close();
+        }
+    }
+
+    @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
         if (msg.isReadable()) {
-            log.info("FatchDataHandler write message to remote address:{} ", channel.remoteAddress());
-            channel.writeAndFlush(msg.copy());
+            byte[] data = new byte[msg.readableBytes()];
+            msg.readBytes(data);
+            channel.writeAndFlush(Unpooled.wrappedBuffer(data));
         }
     }
 }

@@ -5,14 +5,14 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @Auther: WesLin
  * @Date: 2022/6/9
  * @Description:
  */
-@Log4j2
+@Slf4j
 public class HeartBeatHandler extends ChannelInboundHandlerAdapter {
 
     @Override

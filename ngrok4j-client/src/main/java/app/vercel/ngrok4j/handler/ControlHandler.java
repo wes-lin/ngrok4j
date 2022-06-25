@@ -6,16 +6,19 @@ import app.vercel.ngrok4j.model.*;
 import app.vercel.ngrok4j.util.ByteBufUtils;
 import app.vercel.ngrok4j.util.LogUtils;
 import app.vercel.ngrok4j.util.MessageUtils;
+import com.google.common.base.Strings;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang.StringUtils;
+import io.netty.util.ReferenceCountUtil;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
@@ -28,13 +31,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Date: 2022/6/8
  * @Description:
  */
-@Log4j2
+@Slf4j
 public class ControlHandler extends ChannelInboundHandlerAdapter {
 
     private String clientId;
     private NioEventLoopGroup group = new NioEventLoopGroup();
 
-    public final Map<String, NgrokTunnel> map = new ConcurrentHashMap<>();
+    public final Map<String, NgrokTunnel> REGISTERED_TUNNEL_MAP = new ConcurrentHashMap<>();
 
     private NgrokConfig config;
 
@@ -66,16 +69,17 @@ public class ControlHandler extends ChannelInboundHandlerAdapter {
                         .toLowerCase().replace("-", "")
                         .substring(0, 8);
                 reqTunnel.setReqId(reqId);
+                reqTunnel.setRemotePort(tunnel.getRemotePort());
                 reqTunnel.setSubdomain(tunnel.getSubdomain());
                 reqTunnel.setProtocol(tunnel.getProtocol().name());
                 ctx.channel().writeAndFlush(reqTunnel);
-                map.put(reqId, tunnel);
+                REGISTERED_TUNNEL_MAP.put(reqId, tunnel);
             }
         } else if (msg instanceof ReqProxy) {
             Bootstrap b = new Bootstrap();
             b.group(group)
                     .channel(NioSocketChannel.class)
-                    .option(ChannelOption.TCP_NODELAY, true)
+                    .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1, 1024 * 1024 * 8))
                     .handler(new ChannelInitializer<SocketChannel>() {
                         protected void initChannel(SocketChannel ch) throws SSLException {
                             SSLEngine engine = SslContextBuilder.forClient()
@@ -83,31 +87,37 @@ public class ControlHandler extends ChannelInboundHandlerAdapter {
                                     .build()
                                     .newEngine(ch.alloc());
                             ChannelPipeline p = ch.pipeline();
-                            p.addFirst(new SslHandler(engine, false));
+                            SslHandler sslHandler = new SslHandler(engine, false);
+                            sslHandler.setWrapDataSize(32 * 1024);
+                            p.addFirst(sslHandler);
                             p.addLast(new ProxyHandler(config));
                         }
                     });
-            ChannelFuture remoteChannel = b.connect(ctx.channel().remoteAddress()).sync();
-            log.info("connect to proxy address {},{}", remoteChannel.channel().remoteAddress(), remoteChannel);
-            RegProxy regProxy = new RegProxy();
-            regProxy.setClientId(clientId);
-            byte[] data = MessageUtils.getPayloadByte(regProxy);
-            LogUtils.logOut(this.getClass(), new String(data));
-            remoteChannel.channel().writeAndFlush(ByteBufUtils.pack(data));
+            ChannelFuture remoteChannel = b.connect(ctx.channel().remoteAddress())
+                    .addListener((ChannelFutureListener) channelFuture -> {
+                        //send reqProxy request
+                        RegProxy regProxy = new RegProxy();
+                        regProxy.setClientId(clientId);
+                        byte[] data = MessageUtils.getPayloadByte(regProxy);
+                        LogUtils.logOut(this.getClass(), new String(data));
+                        channelFuture.channel().writeAndFlush(ByteBufUtils.pack(data));
+                    }).sync();
+            log.info("connect to proxy address {}", remoteChannel.channel().remoteAddress());
             remoteChannel.channel().closeFuture()
                     .addListener((ChannelFutureListener) channelFuture -> {
                         log.info("disconnect to proxy address " + remoteChannel.channel().remoteAddress());
                     });
         } else if (msg instanceof NewTunnel) {
             NewTunnel newTunnel = (NewTunnel) msg;
-            if (StringUtils.isNotEmpty(newTunnel.getError())) {
-                log.error("Tunnel register fail error:{}", newTunnel.getError());
-            } else {
-                NgrokTunnel ngrokTunnel = map.get(newTunnel.getReqId());
+            if (Strings.isNullOrEmpty(newTunnel.getError())) {
+                NgrokTunnel ngrokTunnel = REGISTERED_TUNNEL_MAP.get(newTunnel.getReqId());
                 ngrokTunnel.setUrl(newTunnel.getUrl());
-                log.info("Tunnel register success");
+                log.info("Tunnel :{} register success", ngrokTunnel.getUrl());
+            } else {
+                log.error("Tunnel :{} register fail error:{}", newTunnel.getUrl(), newTunnel.getError());
             }
         }
+        //must release buffer
+        ReferenceCountUtil.release(msg);
     }
-
 }
