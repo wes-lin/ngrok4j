@@ -1,6 +1,7 @@
 # ngrok4j
 ===================================
-[English](./README_zh.md)
+
+[English](./README.md)
 
 ### 如何使用ngrok4j
 
