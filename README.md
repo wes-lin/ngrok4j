@@ -1,9 +1,12 @@
-# ngrok4j
-===================================
-
+# Ngrok4j
 [中文](./README_zh.md)
 
-### How use ngrok4j
+Ngrok4j is a java project that implements the ngrok protocol based on netty. It allows the server reverse proxy to access your local services. It can be used for some local domain name debugging needs.
+## Links
+* [Netty](https://github.com/netty/netty)
+* [Ngrok](https://ngrok.com/)
+* [dingtalk](https://open.dingtalk.com/document/resourcedownload/http-intranet-penetration)
+## How use ngrok4j
 
 * add dependency:
 ```xml

@@ -1,10 +1,13 @@
-# ngrok4j
-===================================
-
+# Ngrok4j
 [English](./README.md)
 
-### 如何使用ngrok4j
+Ngrok4j 是基于netty来实现ngrok协议的java项目，让服务器反向代理访问你的本地服务，可用于一些本地需要域名调试的需求。
+## 链接
+* [Netty](https://github.com/netty/netty)
+* [Ngrok](https://ngrok.com/)
+* [dingtalk](https://open.dingtalk.com/document/resourcedownload/http-intranet-penetration)
 
+### 如何使用ngrok4j
 * 添加依赖:
 ```xml
     <dependency>
