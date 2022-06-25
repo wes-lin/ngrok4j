@@ -11,7 +11,7 @@ Ngrok4j is a java project that implements the ngrok protocol based on netty. It 
 * add dependency:
 ```xml
     <dependency>
-        <groupId>vercel.app</groupId>
+        <groupId>app.vercel.ngrok4j</groupId>
         <artifactId>ngrok4j-client</artifactId>
         <version>1.0.0</version>
     </dependency>
