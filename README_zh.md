@@ -11,7 +11,7 @@ Ngrok4j 是基于netty来实现ngrok协议的java项目，让服务器反向代�
 * 添加依赖:
 ```xml
     <dependency>
-        <groupId>vercel.app</groupId>
+        <groupId>net.coding.ngrok4j</groupId>
         <artifactId>ngrok4j-client</artifactId>
         <version>1.0.0</version>
     </dependency>
