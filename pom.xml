@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>net.coding.ngrok4j</groupId>
+    <groupId>tk.ngrok4j</groupId>
     <artifactId>ngrok4j-parent</artifactId>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
@@ -19,7 +19,7 @@
     <description>
 
     </description>
-    <url>https://ngrok4j.vercel.app</url>
+    <url>https://ngrok4j.tk</url>
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>

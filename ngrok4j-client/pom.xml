@@ -4,19 +4,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>ngrok4j-parent</artifactId>
-        <groupId>net.coding.ngrok4j</groupId>
+        <groupId>tk.ngrok4j</groupId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>net.coding.ngrok4j</groupId>
+    <groupId>tk.ngrok4j</groupId>
     <artifactId>ngrok4j-client</artifactId>
 
     <name>ngrok4j-client</name>
 
     <dependencies>
         <dependency>
-            <groupId>net.coding.ngrok4j</groupId>
+            <groupId>tk.ngrok4j</groupId>
             <artifactId>ngrok4j-core</artifactId>
             <version>${project.version}</version>
         </dependency>
