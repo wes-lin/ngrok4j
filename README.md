@@ -13,7 +13,7 @@ Ngrok4j is a java project that implements the ngrok protocol based on netty. It 
     <dependency>
         <groupId>tk.ngrok4j</groupId>
         <artifactId>ngrok4j-client</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.0-SNAPSHOT</version>
     </dependency>
 ```
 * In general Java project

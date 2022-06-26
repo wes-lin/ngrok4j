@@ -11,7 +11,7 @@ import java.io.Serializable;
  * @Description:
  */
 @Data
-public class Auth implements Serializable{
+public class Auth implements Serializable {
 
     private static final long serialVersionUID = -220946150060970954L;
 

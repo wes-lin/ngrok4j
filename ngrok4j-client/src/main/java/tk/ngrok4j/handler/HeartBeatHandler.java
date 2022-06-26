@@ -1,11 +1,11 @@
 package tk.ngrok4j.handler;
 
-import tk.ngrok4j.model.Ping;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
+import tk.ngrok4j.model.Ping;
 
 /**
  * @Auther: WesLin

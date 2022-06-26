@@ -1,8 +1,8 @@
 package tk.ngrok4j.util;
 
+import com.fasterxml.jackson.databind.*;
 import tk.ngrok4j.model.Message;
 import tk.ngrok4j.model.MsgType;
-import com.fasterxml.jackson.databind.*;
 
 /**
  * @Auther: WesLin
@@ -18,8 +18,8 @@ public class MessageUtils {
 
     public static Object getPayload(byte[] data) throws Exception {
         JsonNode node = mapper.readTree(data);
-        MsgType msgType = MsgType.valueOf(node.get("Type").asText());
         JsonNode payloadNode = node.get("Payload");
+        String msgType = node.get("Type").asText();
         Class clazz = MsgType.getMsgClass(msgType);
         if (clazz == null) {
             throw new IllegalArgumentException("Unknown MsgType:" + msgType);

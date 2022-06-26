@@ -1,10 +1,5 @@
 package tk.ngrok4j;
 
-import tk.ngrok4j.codec.JsonDecoder;
-import tk.ngrok4j.codec.JsonEncoder;
-import tk.ngrok4j.config.NgrokConfig;
-import tk.ngrok4j.handler.ControlHandler;
-import tk.ngrok4j.handler.HeartBeatHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -12,13 +7,16 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
+import tk.ngrok4j.codec.JsonDecoder;
+import tk.ngrok4j.codec.JsonEncoder;
+import tk.ngrok4j.config.NgrokConfig;
+import tk.ngrok4j.handler.ControlHandler;
+import tk.ngrok4j.handler.HeartBeatHandler;
 
 import javax.net.ssl.SSLEngine;
 import java.nio.ByteOrder;
@@ -55,7 +53,6 @@ public class NgrokClient {
                                     .newEngine(ch.alloc());
                             ChannelPipeline p = ch.pipeline();
                             p.addFirst(new SslHandler(engine, false));
-                            p.addLast(new LoggingHandler(LogLevel.INFO));
                             //length+ content encoder
                             p.addLast(new LengthFieldPrepender(ByteOrder.LITTLE_ENDIAN, 8, 0, false));
                             //encoder

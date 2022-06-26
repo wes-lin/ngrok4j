@@ -23,7 +23,7 @@ public class FetchDataHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        if (this.channel.isActive()){
+        if (this.channel.isActive()) {
             this.channel.close();
         }
     }

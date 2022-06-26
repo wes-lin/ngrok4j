@@ -7,6 +7,6 @@ import java.io.Serializable;
  * @Date: 2022/6/16
  * @Description:
  */
-public class ReqProxy implements Serializable{
+public class ReqProxy implements Serializable {
     private static final long serialVersionUID = 7643310305708630848L;
 }

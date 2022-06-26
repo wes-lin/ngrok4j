@@ -32,13 +32,18 @@ public enum MsgType {
             .put(RegProxy, RegProxy.class)
             .build();
 
-    public static Class getMsgClass(MsgType msgType){
-        return MAP.get(msgType);
+    public static Class getMsgClass(String type) {
+        try {
+            MsgType msgType = MsgType.valueOf(type);
+            return MAP.get(msgType);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
-    public static MsgType getMsgType(Class clazz){
+    public static MsgType getMsgType(Class clazz) {
         for (Map.Entry<MsgType, Class> entry : MAP.entrySet()) {
-            if (entry.getValue().equals(clazz)){
+            if (entry.getValue().equals(clazz)) {
                 return entry.getKey();
             }
         }

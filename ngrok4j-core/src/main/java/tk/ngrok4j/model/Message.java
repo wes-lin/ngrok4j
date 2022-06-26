@@ -12,7 +12,7 @@ import java.io.Serializable;
  */
 @Data
 @AllArgsConstructor
-public class Message<T> implements Serializable{
+public class Message<T> implements Serializable {
 
     private static final long serialVersionUID = -5174339582320840463L;
 

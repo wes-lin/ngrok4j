@@ -13,7 +13,7 @@ Ngrok4j 是基于netty来实现ngrok协议的java项目，让服务器反向代�
     <dependency>
         <groupId>tk.ngrok4j</groupId>
         <artifactId>ngrok4j-client</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.0-SNAPSHOT</version>
     </dependency>
 ```
 * 在普通Java项目中

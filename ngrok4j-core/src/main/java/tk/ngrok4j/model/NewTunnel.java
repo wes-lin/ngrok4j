@@ -10,7 +10,7 @@ import java.io.Serializable;
  * @Description:
  */
 @Data
-public class NewTunnel implements Serializable{
+public class NewTunnel implements Serializable {
 
     private static final long serialVersionUID = 4186082761956945594L;
     private String reqId;

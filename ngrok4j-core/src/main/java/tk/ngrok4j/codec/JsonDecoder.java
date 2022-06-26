@@ -1,9 +1,10 @@
 package tk.ngrok4j.codec;
 
-import tk.ngrok4j.util.MessageUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import tk.ngrok4j.util.LogUtils;
+import tk.ngrok4j.util.MessageUtils;
 
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class JsonDecoder extends ByteToMessageDecoder {
         int len = in.readableBytes();
         byte[] data = new byte[len];
         in.readBytes(data);
+        LogUtils.logIn(this.getClass(), new String(data));
         out.add(MessageUtils.getPayload(data));
     }
 }

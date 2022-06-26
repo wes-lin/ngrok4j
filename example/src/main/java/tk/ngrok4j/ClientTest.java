@@ -10,7 +10,7 @@ import tk.ngrok4j.config.Protocol;
  * @Description:
  */
 public class ClientTest {
-    public static void main(String[] args) throws Exception{
+    public static void main(String[] args) throws Exception {
         NgrokTunnel[] tunnels = new NgrokTunnel[]{
                 NgrokTunnel.builder().subdomain("local-nginx").lhost("127.0.0.1").lport(80).protocol(Protocol.http).build(),
                 NgrokTunnel.builder().remotePort(8306).lhost("127.0.0.1").lport(3306).protocol(Protocol.tcp).build()

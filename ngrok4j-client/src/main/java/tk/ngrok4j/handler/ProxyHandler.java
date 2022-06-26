@@ -1,10 +1,5 @@
 package tk.ngrok4j.handler;
 
-import tk.ngrok4j.config.NgrokConfig;
-import tk.ngrok4j.config.NgrokTunnel;
-import tk.ngrok4j.model.StartProxy;
-import tk.ngrok4j.util.LogUtils;
-import tk.ngrok4j.util.MessageUtils;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -14,6 +9,11 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
+import tk.ngrok4j.config.NgrokConfig;
+import tk.ngrok4j.config.NgrokTunnel;
+import tk.ngrok4j.model.StartProxy;
+import tk.ngrok4j.util.LogUtils;
+import tk.ngrok4j.util.MessageUtils;
 
 /**
  * @Auther: WesLin
@@ -35,7 +35,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-        if (!msg.isReadable()){
+        if (!msg.isReadable()) {
             return;
         }
         int rb = msg.readableBytes();
@@ -47,7 +47,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<ByteBuf> {
                 Object response;
                 try {
                     response = MessageUtils.getPayload(data);
-                }catch (Exception e){
+                } catch (Exception e) {
                     log.error("getPayLoad fail,close proxy...");
                     ctx.close();
                     return;
@@ -84,7 +84,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<ByteBuf> {
                         ctx.channel().writeAndFlush(Unpooled.copiedBuffer(error, CharsetUtil.UTF_8));
                     }
                 }
-            }else {
+            } else {
                 log.info("ProxyHandler write message to local port " + localChannel.channel().localAddress());
                 localChannel.channel().writeAndFlush(Unpooled.wrappedBuffer(data));
             }
