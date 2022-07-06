@@ -1,6 +1,8 @@
 # Ngrok4j
 [English](./README.md)
 
+[![Maven Central](https://img.shields.io/maven-central/v/tk.ngrok4j/ngrok4j-client.svg)](https://mvnrepository.com/artifact/tk.ngrok4j/ngrok4j-client)
+
 Ngrok4j 是基于netty来实现ngrok协议的java项目，让服务器反向代理访问你的本地服务，可用于一些本地需要域名调试的需求。
 ## 链接
 * [Netty](https://github.com/netty/netty)
